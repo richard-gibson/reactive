@@ -53,10 +53,9 @@ abstract class QuickCheckHeap extends Properties("Heap") with IntHeap {
   implicit lazy val arbHeap: Arbitrary[H] = Arbitrary(genHeap)
 
   implicit class HeapTestUtil (val heap: H){
+    val toDescendingList  = heap2DesList(Nil, heap)
 
-    def toDescendingList  = heap2DesList(Nil, heap)
-    @tailrec
-    private def heap2DesList(list: List[Int], heap: H): List[Int] = {
+    @tailrec private def heap2DesList(list: List[Int], heap: H): List[Int] = {
       if (isEmpty(heap)) list
       else {
         val l = findMin(heap)::list
