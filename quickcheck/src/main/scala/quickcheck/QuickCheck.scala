@@ -4,6 +4,7 @@ import org.scalacheck._
 import Arbitrary._
 import Gen._
 import Prop._
+import scala.annotation.tailrec
 
 abstract class QuickCheckHeap extends Properties("Heap") with IntHeap {
 
@@ -30,26 +31,18 @@ abstract class QuickCheckHeap extends Properties("Heap") with IntHeap {
   }
 
   property("heap always retrieve min") = forAll { h: H =>
-    val l = heap2List(Nil, h)
+    val l = h.toDescendingList
     l == l.sorted.reverse
-  }
-
-  def heap2List(list: List[Int], heap: H): List[Int] = {
-    if (isEmpty(heap)) list
-    else {
-      val l = findMin(heap)::list
-      heap2List(l, deleteMin(heap))
-    }
   }
 
   property("melded heap returns min of 2 heaps") = forAll { pair: (H,H) =>
     val(h1,h2) = pair
-    findMin(meld(h1,h2)) == List(findMin(h1),findMin(h2)).min
+   findMin(meld(h1,h2)) == List(findMin(h1),findMin(h2)).min
   }
 
   property("melded heap contains union of 2 heaps") = forAll { pair: (H,H) =>
     val(h1,h2) = pair
-    heap2List(Nil,meld(h1,h2)).sorted == (heap2List(Nil,h1):::heap2List(Nil,h2)).sorted
+    meld(h1,h2).toDescendingList.sorted == (h1.toDescendingList:::h2.toDescendingList).sorted
   }
 
   lazy val genHeap: Gen[H] = for {
@@ -57,7 +50,19 @@ abstract class QuickCheckHeap extends Properties("Heap") with IntHeap {
     heap <- oneOf(value(empty),genHeap)
   } yield insert(i,heap)
 
-
   implicit lazy val arbHeap: Arbitrary[H] = Arbitrary(genHeap)
+
+  implicit class HeapTestUtil (val heap: H){
+
+    def toDescendingList  = heap2DesList(Nil, heap)
+    @tailrec
+    private def heap2DesList(list: List[Int], heap: H): List[Int] = {
+      if (isEmpty(heap)) list
+      else {
+        val l = findMin(heap)::list
+        heap2DesList(l, deleteMin(heap))
+      }
+    }
+  }
 
 }
